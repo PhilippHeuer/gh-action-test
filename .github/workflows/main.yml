@@ -1,6 +1,6 @@
 ###
 # Pipeline: Modular Pipeline
-# Version:
+# Version: master
 ###
 
 # meta
@@ -11,6 +11,8 @@ on:
   push:
     branches:
       - master
+# v[12].[0-9]+.[0-9]+
+# feature/*
 
 # jobs
 jobs:
@@ -24,7 +26,7 @@ jobs:
       image: docker.io/envcli/modular-pipeline:latest
       env:
         DOCKER_HOST: "tcp://dind:2375"
-        SCRIPT_LOG_LEVEL: "TRACE"
+        # SCRIPT_LOG_LEVEL: "TRACE"
       volumes:
         - cache:/cache
     services:
@@ -45,21 +47,16 @@ jobs:
     - id: prepare
       name: Prepare
       run: |
-        printenv
         mpi stage prepare
-      env:
-        BINTRAY_ORGANZATION: envcli
-        BINTRAY_REPOSITORY: golang
-        BINTRAY_PACKAGE: normalize-ci
-        BINTRAY_USERNAME: philippheuer
-        EX: ${{ steps.prepare.outputs.action_fruit }}
-        BINTRAY_TOKEN: ${{ secrets.BINTRAY_TOKEN }}
+        echo ::set-env name=PROJECT_TYPE::$PROJECT_TYPE
     # projectType
     - name: Build
+      env:
+        PROJECT_TYPE: ${{ steps.prepare.outputs.action_fruit }}
       run: |
         echo "PROJ_TYPE: $PROJECT_TYPE"
         mpi stage build
-      #if: success() && secrets.GITHUB_TOKEN
+      if: success() && env.PROJECT_TYPE != "none"
     - name: Test
       run: |
         mpi stage test
