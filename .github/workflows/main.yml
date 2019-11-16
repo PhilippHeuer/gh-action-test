@@ -23,13 +23,9 @@ jobs:
     container:
       image: docker.io/envcli/modular-pipeline:latest
       env:
-        DOCKER_HOST: "tcp://localhost:2375"
+        DOCKER_HOST: "tcp://dind:2375"
       volumes:
-        # caching support
         - cache:/cache
-        # project dir mount
-        #- /home/runner/work:/home/runner/work
-        #- /__w/gh-action-test/gh-action-test
     services:
       dind:
         image: docker.io/docker:19.03.5-dind
@@ -49,6 +45,7 @@ jobs:
     - id: prepare
       name: Prepare
       run: |
+        printenv
         mpi stage prepare
       env:
         BINTRAY_ORGANZATION: envcli
