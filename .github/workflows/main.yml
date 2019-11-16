@@ -21,22 +21,10 @@ jobs:
     # runtime environment
     runs-on: ubuntu-latest
 
-    # container - pipeline
-    container:
-      image: docker.io/envcli/modular-pipeline:latest
-      env:
-        DOCKER_HOST: "tcp://dind:2375"
-        # SCRIPT_LOG_LEVEL: "TRACE"
-      volumes:
-        - cache:/cache
-    services:
-      dind:
-        image: docker.io/docker:19.03.5-dind
-        env:
-          DOCKER_TLS_CERTDIR: ""
-        ports:
-          - 2375:2375
-        options: "--privileged -v /home/runner/work:/__w"
+    # global env
+    env:
+      SCRIPT_LOG_LEVEL: "TRACE"
+
     # jobs
     steps:
     # checkout
@@ -47,31 +35,37 @@ jobs:
     - id: prepare
       name: Prepare
       run: |
-        mpi stage prepare
-        echo ::set-env name=PROJECT_TYPE::$PROJECT_TYPE
+        curl -L -s https://raw.githubusercontent.com/EnvCLI/modular-pipeline/master/install-prerequisites.sh | sudo bash -s
+        curl -L -s https://raw.githubusercontent.com/EnvCLI/modular-pipeline/master/install.sh | sudo bash -s /usr/local
+        . mpi stage prepare
+        echo "::set-output name=PROJECT_TYPE::PROJECT_TYPE"
+        echo "::set-output name=PACKAGE_TYPE::PACKAGE_TYPE"
+        echo "::set-output name=PUBLISH_TYPE::PUBLISH_TYPE"
     # projectType
     - name: Build
-      env:
-        PROJECT_TYPE: ${{ steps.prepare.outputs.action_fruit }}
       run: |
-        echo "PROJ_TYPE: $PROJECT_TYPE"
         mpi stage build
-      if: success() && env.PROJECT_TYPE != "none"
+      if: success() && steps.prepare.outputs.PROJECT_TYPE != 'none'
     - name: Test
       run: |
         mpi stage test
+      if: success() && steps.prepare.outputs.PROJECT_TYPE != 'none'
     # packageType
     - name: Package
       run: |
-        mpi stage package
+        source mpi stage package
+      if: success() && steps.prepare.outputs.PACKAGE_TYPE != 'none'
     - name: Audit
       run: |
         mpi stage audit
+      if: success() && (steps.prepare.outputs.PROJECT_TYPE != 'none' || steps.prepare.outputs.PACKAGE_TYPE != 'none')
     # publishType
     - name: Publish
       run: |
         mpi stage publish
+      if: success() && steps.prepare.outputs.PUBLISH_TYPE != 'none'
     # CleanUp
     - name: CleanUp
       run: |
         mpi stage cleanup
+      if: success() || failure()
