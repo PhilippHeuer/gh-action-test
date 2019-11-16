@@ -36,7 +36,7 @@ jobs:
           - 2375:2375
         options: "--privileged"
         volumes:
-        - "/home/runner/work:/__w"
+        - /home/runner/work:/__w
     # jobs
     steps:
     # checkout
