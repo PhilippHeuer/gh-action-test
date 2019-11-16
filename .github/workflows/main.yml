@@ -46,7 +46,7 @@ jobs:
       run: |
         echo "PROJ_TYPE: $PROJECT_TYPE"
         mpi stage build
-      if: success() && secrets.GITHUB_TOKEN
+      #if: success() && secrets.GITHUB_TOKEN
     - name: Test
       run: |
         mpi stage test
