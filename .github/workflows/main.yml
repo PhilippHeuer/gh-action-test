@@ -19,9 +19,25 @@ jobs:
     # runtime environment
     runs-on: ubuntu-latest
 
-    # run all steps in a container
+    # container - pipeline
     container:
       image: docker.io/envcli/modular-pipeline:latest
+      env:
+        DOCKER_HOST: "tcp://localhost:2375"
+      volumes:
+        # caching support
+        - cache:/cache
+        # project dir mount
+        #- /home/runner/work:/home/runner/work
+        #- /__w/gh-action-test/gh-action-test
+    services:
+      dind:
+        image: docker.io/docker:19.03.5-dind
+        env:
+          DOCKER_TLS_CERTDIR: ""
+        ports:
+          - 2375:2375
+        options: "--privileged"
 
     # jobs
     steps:
@@ -46,7 +62,7 @@ jobs:
       run: |
         echo "PROJ_TYPE: $PROJECT_TYPE"
         mpi stage build
-      #if: success() && secrets.GITHUB_TOKEN
+      if: success() && secrets.GITHUB_TOKEN
     - name: Test
       run: |
         mpi stage test
