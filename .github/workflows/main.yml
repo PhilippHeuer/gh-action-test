@@ -1,0 +1,67 @@
+###
+# Pipeline: Modular Pipeline
+# Version:
+###
+
+# meta
+name: CI
+
+# trigger
+on:
+  push:
+    branches:
+      - master
+
+# jobs
+jobs:
+  # stages
+  build:
+    # runtime environment
+    runs-on: ubuntu-latest
+
+    # run all steps in a container
+    container:
+      image: docker.io/envcli/modular-pipeline:latest
+
+    # jobs
+    steps:
+    # checkout
+    - uses: actions/checkout@v1
+      with:
+        fetch-depth: 1
+    # pipeline steps
+    - id: prepare
+      name: Prepare
+      run: |
+        mpi stage prepare
+      env:
+        BINTRAY_ORGANZATION: envcli
+        BINTRAY_REPOSITORY: golang
+        BINTRAY_PACKAGE: normalize-ci
+        BINTRAY_USERNAME: philippheuer
+        EX: ${{ steps.prepare.outputs.action_fruit }}
+        BINTRAY_TOKEN: ${{ secrets.BINTRAY_TOKEN }}
+    # projectType
+    - name: Build
+      run: |
+        echo "PROJ_TYPE: $PROJECT_TYPE"
+        mpi stage build
+      if: success() && secrets.GITHUB_TOKEN
+    - name: Test
+      run: |
+        mpi stage test
+    # packageType
+    - name: Package
+      run: |
+        mpi stage package
+    - name: Audit
+      run: |
+        mpi stage audit
+    # publishType
+    - name: Publish
+      run: |
+        mpi stage publish
+    # CleanUp
+    - name: CleanUp
+      run: |
+        mpi stage cleanup
