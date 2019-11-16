@@ -34,9 +34,7 @@ jobs:
           DOCKER_TLS_CERTDIR: ""
         ports:
           - 2375:2375
-        options: "--privileged"
-        volumes:
-        - /home/runner/work:/__w
+        options: "--privileged -v /home/runner/work:/__w"
     # jobs
     steps:
     # checkout
